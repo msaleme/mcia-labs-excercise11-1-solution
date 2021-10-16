@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  #%L
+  MuleSoft Training - Anypoint Platform Architecture: Integration Solutions
+  %%
+  Copyright (C) 2015 - 2021 MuleSoft, Inc. All rights reserved. http://www.mulesoft.com
+  %%
+  The software in this package is published under the terms of the
+  Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International Public License,
+  a copy of which has been included with this distribution in the LICENSE.txt file.
+  #L%
+-->
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd  http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd  http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd  http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+    <!-- ... -->
+    <flow name="jmsLocalTransaction-moduleFlow" doc:id="6cb93f03-4ec5-47b1-a9a0-dc14535458cb" doc:description="The second publish call failed in transaction. Not sure why -  operation 'publish' of extension 'JMS' uses a transactional connection 'org.mule.extensions.jms.internal.connection.JmsTransactionalConnection', but the current transaction doesn't support it and could not be bound   Sample Request for Application is -   {  &quot;id&quot; : &quot;16&quot;,  &quot;name&quot; : &quot;Test&quot; } ">
+        <http:listener doc:name="Listener" doc:id="883837f5-24fa-40fe-87e5-0cf7f0b4b70e" config-ref="HTTP_Listener_config" path="/jmslocal"/>
+        <set-payload value="#['hello']" doc:name="Set Payload" doc:id="b3fbd273-5229-46ca-a971-0611ed885be4" mimeType="application/json"/>
+        <try doc:name="Try" doc:id="52586a1e-d0ec-431f-8249-9f0c93fc564f" transactionalAction="ALWAYS_BEGIN">
+            <jms:publish doc:name="Publish" doc:id="3ea79f31-5498-43c5-b283-04da83e2201a" config-ref="Local_JMS_Config" destination="testlocal">
+                <jms:message>
+                    <jms:body><![CDATA[#['test']]]></jms:body>
+                </jms:message>
+            </jms:publish>
+            <jms:publish doc:name="Publish" doc:id="f34c73e0-2d32-453c-bbb9-b51428fe02b0" config-ref="Local_JMS_Config" destination="testlocal1">
+                <jms:message>
+                    <jms:body><![CDATA[#['test']]]></jms:body>
+                </jms:message>
+            </jms:publish>
+        </try>
+        <logger level="INFO" doc:name="Logger" doc:id="c21c17c4-53f1-4472-9520-eb7f96f32157" message="#[payload]"/>
+    </flow>
+    <flow name="jmsLocalTransaction-moduleAsyncFlow" doc:id="4e36a76f-afa0-4b29-8106-ed0712d07d7f">
+        <http:listener doc:name="Listener" doc:id="c0070d62-40ee-4326-9366-29470a6ea241" config-ref="HTTP_Listener_config" path="/jmslocalasync"/>
+        <set-payload value="#['hello']" doc:name="Set Payload" doc:id="9105477e-a7e0-47d7-9cb2-c4ed02cce410"/>
+        <jms:publish doc:name="Publish" doc:id="804e3e3f-4a41-497a-96d7-b99ac140e2f8" config-ref="Local_JMS_Config" destination="testlocalasync"/>
+        <logger level="INFO" doc:name="Logger" doc:id="a1ad1154-d735-4033-ac57-356d8050241c" message="#[payload]"/>
+    </flow>
+    <flow name="jmsLocalListnerTransaction-moduleFlow" doc:id="98761a95-f456-4e27-bfdf-32966d1eb1ec" doc:description="The second publish fails with -  'publish' of extension 'JMS' uses a transactional connection 'org.mule.extensions.jms.internal.connection.JmsTransactionalConnection', but the current transaction doesn't support it and could not be bound">
+        <jms:listener doc:name="Listener" doc:id="7fb7c99d-ef21-4845-a544-1d54d5346354" config-ref="Local_JMS_Config" destination="testlocalasync" transactionalAction="ALWAYS_BEGIN"/>
+        <jms:publish doc:name="Publish" doc:id="32685601-e50a-4634-a623-b37b15ddca19" config-ref="Local_JMS_Config" destination="testlocalasync1" transactionalAction="ALWAYS_JOIN"/>
+        <jms:publish doc:name="Publish" doc:id="bdcdabaa-3aa6-46cc-b76b-c8b88f9d5d23" config-ref="Local_JMS_Config" destination="testlocalasync2" transactionalAction="ALWAYS_JOIN"/>
+    </flow>
+    <flow name="jmsXATransaction-moduleFlow" doc:id="22adfe13-76e7-47bf-9869-fa96b469f19c">
+        <http:listener doc:name="Listener" doc:id="22339fee-a701-46bc-94e5-75a0c1e14e22" config-ref="HTTP_Listener_config" path="/jmsxatransaction" outputMimeType="application/json" allowedMethods="POST"/>
+        <set-payload value="#[{ Name : payload.name , Id : payload.id }]" doc:name="Set Payload" doc:id="cb8c8b27-336e-4e70-8fc5-63dea4d6b010" mimeType="application/json"/>
+        <ee:transform doc:name="Transform Message" doc:id="93d839a9-92ea-4492-b12a-65ed4b63cff2">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, payload.^mimeType)]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <jms:publish doc:name="Publish" doc:id="d7116790-090c-4f5c-876c-9de97d6259ca" config-ref="XA_JMS_Config" destination="testXA"/>
+        <logger level="INFO" doc:name="Logger" doc:id="243c3af9-eacd-429a-ae31-7cb2ae49b82e" message="#[payload]"/>
+    </flow>
+    <flow name="jmsXAListnerTransaction-moduleFlowAsync" doc:id="b62b8484-66f5-4649-8721-9eb5596736b4" doc:description="This flow would not work as expected as JMS does not support XA.">
+        <jms:listener doc:name="Listener" doc:id="2ce65bb8-6118-4e85-ad8f-c95367dba169" destination="testXA" transactionType="XA" config-ref="XA_JMS_Config" transactionalAction="ALWAYS_BEGIN" doc:description="If insert fails in flow, message is still consumed by flow. The XA is not working with JMS."/>
+        <ee:transform doc:name="Transform Message" doc:id="eafb524e-9066-4657-a38e-4edc484ce831">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+read(payload, "application/json")]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <db:insert doc:id="97fe4a13-73ba-4c06-b403-062751a09598" config-ref="XA_MySQL_Database_Config" doc:name="Insert" transactionalAction="ALWAYS_JOIN">
+            <db:sql>insert into employee1 values (:id , :name)</db:sql>
+            <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+        </db:insert>
+        <logger level="INFO" doc:id="824d7c51-bfa0-4d3d-a82b-e31596062d8e" message="#[ payload]" doc:name="Logger"/>
+    </flow>
+    <flow name="dbXATransaction-moduleFlow" doc:id="8e12b24b-28d7-4ddc-85dc-b39d7f403a86" doc:description="XA DB works as expected and failure in derby call will rollback the MySql insert. ">
+        <http:listener doc:name="Listener" doc:id="ab30eecf-5b7b-48bb-9bdb-801ee39f1801" config-ref="HTTP_Listener_config" path="/dbxatransaction" outputMimeType="application/json" allowedMethods="POST"/>
+        <set-payload value="#[{ Name : payload.name , Id : payload.id }]" doc:name="Set Payload" doc:id="f5403487-28a0-4427-9db6-75d01bb9f304" mimeType="application/json"/>
+        <set-variable value="#[payload]" doc:name="Set Variable" doc:id="0cf61251-e636-4526-9e9a-500c69b99eb9" variableName="data"/>
+        <try doc:name="Try" doc:id="4206036c-6388-46fc-9095-41b862bcca92" transactionalAction="ALWAYS_BEGIN" transactionType="XA">
+            <db:insert doc:id="a348b19a-959a-423d-a5bb-88e437a544d1" doc:name="Insert to MySQL" transactionalAction="ALWAYS_JOIN" config-ref="XA_MySQL_Database_Config">
+                <db:sql>insert into employee values (:id , :name)</db:sql>
+                <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+            </db:insert>
+            <set-payload value="#[vars.data]" doc:name="Set Payload" doc:id="a8033cff-a54f-415b-a305-e8adc398b85c"/>
+            <db:insert doc:name="Insert to Derby" doc:id="48c537c1-9094-4eb6-8cba-4faf5e961865" config-ref="Generic_Derby_Database_Config" transactionalAction="ALWAYS_JOIN">
+                <db:sql>insert into employee values (:id , :name)</db:sql>
+                <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+            </db:insert>
+        </try>
+        <logger level="INFO" doc:name="Logger" doc:id="424d2594-fb00-4922-863a-ceeea0322282" message="#[payload]"/>
+    </flow>
+    <flow name="dbLocalTransaction-moduleFlow" doc:id="3a414f5d-d5d8-4000-a293-f242ab8973dd">
+        <http:listener doc:name="Listener" doc:id="8c549585-24ca-427e-826e-0d4806f3cc68" config-ref="HTTP_Listener_config" path="/dblocaltransaction" outputMimeType="application/json" allowedMethods="POST"/>
+        <set-payload value="#[{ Name : payload.name , Id : payload.id }]" doc:name="Set Payload" doc:id="532b7728-db35-41c0-ad8e-b359ab9cb22d" mimeType="application/json"/>
+        <set-variable value="#[payload]" doc:name="Set Variable" doc:id="54672083-f967-49ca-bfd1-7504f56bc4d9" variableName="data"/>
+        <try doc:name="Try" doc:id="ef3b03a3-ba29-451f-8df0-34705e7529ec" transactionalAction="ALWAYS_BEGIN">
+            <db:insert doc:id="65980d61-4a9c-494a-91c1-fd857ce87f86" config-ref="Local_MySQL_Database_Config" doc:name="Insert to MySQL" transactionalAction="ALWAYS_JOIN">
+                <db:sql>insert into employee values (:id , :name)</db:sql>
+                <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+            </db:insert>
+            <logger level="INFO" doc:id="ee4c5fe4-33a4-48f0-a499-fae53d95d9e8" message="#[ payload]" doc:name="Logger"/>
+            <set-payload value="#[vars.data]" doc:name="Set Payload" doc:id="cbd0352f-fe70-4aed-a7cc-c8af7f90d692"/>
+            <db:insert doc:id="18d4e425-2b37-4c68-837b-347c50522094" doc:name="Insert to MySQL" transactionalAction="ALWAYS_JOIN" config-ref="Local_MySQL_Database_Config">
+                <db:sql>insert into employee values (:id , :name)</db:sql>
+                <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+            </db:insert>
+        </try>
+        <logger level="INFO" doc:name="Logger" doc:id="b53cc751-5dfb-4dca-a222-83ddf3f669db" message="#[payload]"/>
+    </flow>
+    <flow name="jmsAckTransaction-moduleFlow" doc:id="1129a3f1-0a5a-45e0-8f46-7ed218cb525d">
+        <http:listener doc:name="Listener" doc:id="dd2bca24-e420-461f-9c23-9c564241edf9" config-ref="HTTP_Listener_config" path="/jmsack" outputMimeType="application/json" allowedMethods="POST"/>
+        <set-payload value="#[{ Name : payload.name , Id : payload.id }]" doc:name="Set Payload" doc:id="4b3d8662-b3a8-47ea-9d37-06ab846c6415" mimeType="application/json"/>
+        <ee:transform doc:name="Transform Message" doc:id="ab366c20-baab-490c-a45e-2ca5c350d324">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, payload.^mimeType)]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <jms:publish doc:name="Publish" doc:id="058c676f-ef45-49b8-bb1a-f624b28ca3e6" destination="ack" config-ref="Local_JMS_Config"/>
+        <logger level="INFO" doc:name="Logger" doc:id="32cf353c-c3e8-4ebf-8de2-6bcaf5dfcba3" message="#[payload]"/>
+    </flow>
+    <flow name="jmsAckTransaction-moduleFlowAsync" doc:id="e5f7ed24-fbb3-43cc-96c1-d2789c8bb497">
+        <jms:listener doc:name="Listener" doc:id="5d405ac6-6db0-4689-9bbb-84102b2c9009" config-ref="Local_JMS_Config" destination="ack" ackMode="MANUAL"/>
+        <set-variable value="#[attributes.ackId]" doc:name="Set Variable" doc:id="595d92e9-a640-40bf-90ce-3fac71e31880" variableName="ackId"/>
+        <raise-error doc:name="Throw Exception" type="ANY" description="#['Error rollback']"/>
+        <ee:transform doc:name="Transform Message" doc:id="820954bb-240b-4ef7-bb56-00cb904c4b2b">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+read(payload, "application/json")]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <db:insert doc:id="37653d97-9c37-43fa-9526-7ca352d89a19" config-ref="Local_MySQL_Database_Config" doc:name="Insert">
+            <db:sql>insert into employee values (:id , :name)</db:sql>
+            <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+        </db:insert>
+        <jms:ack doc:name="Ack" doc:id="5484df83-ee66-409a-83d5-136c9b8443f2" ackId="#[vars.ackId]"/>
+        <logger level="INFO" doc:id="228902cf-c624-4acf-8b6f-20ccab4329f9" message="#[ payload]" doc:name="Logger"/>
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2f7cfa42-5a73-4706-8961-d8a5e3d5f16a">
+                <jms:recover-session doc:name="Recover session" doc:id="f289d045-6295-427c-a939-2ac72ed7acb2" ackId="#[vars.ackId]"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+    <flow name="vmLocalTransaction-moduleFlow" doc:id="4bace134-ca4d-4cb2-a09e-2d871616f340">
+        <http:listener doc:name="Listener" doc:id="aefdf0e2-6608-4c5e-abb4-17d009f8ba7f" config-ref="HTTP_Listener_config" path="/vmlocaltransaction"/>
+        <vm:publish doc:name="Publish" doc:id="9a5f7587-5784-4966-b916-f6a2413234db" config-ref="Local_VM_Config" queueName="test"/>
+    </flow>
+    <flow name="vmLocalTransaction-moduleFlowAsync" doc:id="4e412bf0-f1ca-4784-845b-3002bac5272a">
+        <vm:listener doc:name="Listener" doc:id="e81db7b6-4c01-4bce-8cbf-26a8c861fb7c" queueName="test" config-ref="Local_VM_Config" transactionalAction="ALWAYS_BEGIN"/>
+        <vm:publish doc:name="Publish" doc:id="271c1a2e-8bfe-411b-ab78-40eb478e2519" config-ref="Local_VM_Config" queueName="testA"/>
+        <logger level="INFO" doc:name="Logger" doc:id="da6e3d10-6fef-4d18-939b-dd6e2e611678" message="#['Validated']"/>
+    </flow>
+    <flow name="vmXATransaction-moduleFlow" doc:id="58740507-b0ac-4f56-9f1c-10cbc6f88e99">
+        <http:listener doc:name="Listener" doc:id="c3675380-0c30-48be-858a-8134944403b9" config-ref="HTTP_Listener_config" path="/vmxatransaction"/>
+        <vm:publish doc:name="Publish" doc:id="c6b7ac91-b805-4c9f-b1b4-dbda95e48845" config-ref="XA_VM_Config" queueName="testX"/>
+    </flow>
+    <flow name="vmXATransaction-moduleFlowAsync" doc:id="904a73ac-4f1b-4a1c-a714-e6afa71ceec7" doc:description="This flow verify that VM XA transaction failes and goes into infinte loop. The error in Log is intentional">
+        <vm:listener doc:name="Listener" doc:id="0c3d652a-3b1e-42e9-8f99-8e7630f4e276" queueName="testX" config-ref="XA_VM_Config" transactionalAction="ALWAYS_BEGIN" transactionType="XA"/>
+        <raise-error doc:name="Throw Exception" type="ANY" description="#['Error rollback']"/>
+        <vm:publish doc:name="Publish" doc:id="ffd22925-be5f-467b-a8ec-048244b5173b" config-ref="XA_VM_Config" queueName="testXA"/>
+    </flow>
+    <flow name="dbvmXATransaction-moduleFlow" doc:id="5e86f47b-9617-4393-ab75-de91d1315588" doc:description="XA DB works as expected and failure in derby call will rollback the MySql insert. ">
+        <http:listener doc:name="Listener" doc:id="cb80334f-ac60-4ff0-a974-458b2f78f6a5" config-ref="HTTP_Listener_config" path="/dbvmxatransaction" outputMimeType="application/json" allowedMethods="POST"/>
+        <set-payload value="#[{ Name : payload.name , Id : payload.id }]" doc:name="Set Payload" doc:id="bdb3d575-4eae-41e0-9df4-ccbb0a7cb7f1" mimeType="application/json"/>
+        <set-variable value="#[payload]" doc:name="Set Variable" doc:id="9591ffd2-47e8-4632-a004-e78354369337" variableName="data"/>
+        <try doc:name="Try" doc:id="498c8a84-5bab-40b8-b166-8f062cc3409e" transactionalAction="ALWAYS_BEGIN" transactionType="XA">
+            <db:insert doc:id="a94dba58-7d4f-4ba2-968f-b1717502e936" doc:name="Insert to MySQL" transactionalAction="ALWAYS_JOIN" config-ref="XA_MySQL_Database_Config">
+                <db:sql>insert into employee values (:id , :name)</db:sql>
+                <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+            </db:insert>
+            <set-payload value="#[vars.data]" doc:name="Set Payload" doc:id="d38ed31e-fade-4829-b166-12d540c8db13"/>
+            <vm:publish doc:name="Publish" doc:id="1ab6d3ab-c56e-4af9-8e20-1137833114cf" config-ref="XA_VM_Config" queueName="testXA"/>
+            <logger level="INFO" doc:id="a356146a-a672-4e63-bd48-fc8cdcddd623" message="#[payload]" doc:name="Logger"/>
+        </try>
+        <logger level="INFO" doc:name="Logger" doc:id="e51c3a71-1873-4208-91f3-1b8f612dcd62" message="#[payload]"/>
+    </flow>
+    <flow name="dbjmsXATransaction-moduleFlow" doc:id="20434c93-2e3e-4e0d-ab65-ee77be33f788" doc:description="XA DB works as expected and failure in derby call will rollback the MySql insert. ">
+        <http:listener doc:name="Listener" doc:id="67c86bd8-3555-4547-9b88-37816212aeb6" config-ref="HTTP_Listener_config" path="/dbjmsxatransaction" outputMimeType="application/json" allowedMethods="POST"/>
+        <set-payload value="#[{ Name : payload.name , Id : payload.id }]" doc:name="Set Payload" doc:id="a7941889-e72b-4f68-9c89-d4c631f117f0" mimeType="application/json"/>
+        <set-variable value="#[payload]" doc:name="Set Variable" doc:id="3e4a8982-00f2-4ed6-b7b4-16204f43f81d" variableName="data"/>
+        <try doc:name="Try" doc:id="3a0f146e-2683-444f-ab4b-b1333d26497e" transactionalAction="ALWAYS_BEGIN" transactionType="XA" doc:description="the transaction will fail as JMS does not participate in XA.">
+            <db:insert doc:id="717022dd-4f61-4d39-b963-2bf4ca3ea2ce" doc:name="Insert to MySQL" transactionalAction="ALWAYS_JOIN" config-ref="XA_MySQL_Database_Config">
+                <db:sql>insert into employee values (:id , :name)</db:sql>
+                <db:input-parameters><![CDATA[#[{ 'id' : payload.Id , 'name' : payload.Name}]]]></db:input-parameters>
+            </db:insert>
+            <set-payload value="#[vars.data]" doc:name="Set Payload" doc:id="166e3212-fd9e-4b12-be26-5bffa0c825d2"/>
+            <jms:publish doc:name="Publish" doc:id="8b20a010-b962-4735-9117-ae1a351d9a78" config-ref="XA_JMS_Config" destination="testJMSXA" transactionalAction="ALWAYS_JOIN"/>
+            <logger level="INFO" doc:id="96ee8b6f-e94c-4f32-aed8-de065b9d8c59" message="#[payload]" doc:name="Logger"/>
+        </try>
+        <logger level="INFO" doc:name="Logger" doc:id="de3c2ded-c170-4eb4-8f8b-240b83b7548f" message="#[payload]"/>
+    </flow>
+</mule>

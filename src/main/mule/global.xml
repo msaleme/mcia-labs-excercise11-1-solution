@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  #%L
+  MuleSoft Training - Anypoint Platform Architecture: Integration Solutions
+  %%
+  Copyright (C) 2015 - 2021 MuleSoft, Inc. All rights reserved. http://www.mulesoft.com
+  %%
+  The software in this package is published under the terms of the
+  Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International Public License,
+  a copy of which has been included with this distribution in the LICENSE.txt file.
+  #L%
+  -->
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:bti="http://www.mulesoft.org/schema/mule/ee/bti" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/ee/bti http://www.mulesoft.org/schema/mule/ee/bti/current/mule-bti-ee.xsd  http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd   http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd  http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+    <!-- ... -->
+    <global-property name="env" value="dev" doc:name="Default env to dev"/>
+    <!-- 1st def of a property is preserved, so env-dependent takes priority over env-independent -->
+    <configuration-properties file="${env}-properties.yaml" doc:name="Env Config Props"/>
+    <configuration-properties file="properties.yaml" doc:name="Config Props"/>
+    <bti:transaction-manager/>
+    <!-- 
+	 <bti:xa-data-source-pool name="bitronixDataSource" minPoolSize="5" maxPoolSize="15" maxIdleTime="40" acquireIncrement="2" preparedStatementCacheSize="6" acquireTimeoutSeconds="50" dataSource-ref="MySQL_Database_Config"/>
+ 	 -->
+    <http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="77782be9-0abf-43b8-9f37-f1df6b1dc721">
+        <http:listener-connection port="8081" host="0.0.0.0"/>
+    </http:listener-config>
+    <jms:config name="XA_JMS_Config" doc:name="JMS Config" doc:id="07f7e042-9147-42e9-93d4-ac5a64bb5396">
+        <jms:active-mq-connection>
+            <jms:caching-strategy>
+                <jms:default-caching/>
+            </jms:caching-strategy>
+            <jms:factory-configuration brokerUrl="tcp://localhost:61616" enable-xa="true"/>
+        </jms:active-mq-connection>
+        <jms:consumer-config>
+            <jms:consumer-type>
+                <jms:queue-consumer/>
+            </jms:consumer-type>
+        </jms:consumer-config>
+    </jms:config>
+    <jms:config name="Local_JMS_Config" doc:name="JMS Config" doc:id="f04f4f48-de8f-4582-bf02-df1b06c4f349">
+        <jms:active-mq-connection>
+            <jms:caching-strategy>
+                <jms:default-caching/>
+            </jms:caching-strategy>
+            <jms:factory-configuration brokerUrl="tcp://localhost:61616" maxRedelivery="1"/>
+        </jms:active-mq-connection>
+        <jms:consumer-config>
+            <jms:consumer-type>
+                <jms:queue-consumer/>
+            </jms:consumer-type>
+        </jms:consumer-config>
+    </jms:config>
+    <db:config name="Generic_Derby_Database_Config" doc:name="Database Config" doc:id="b23ef292-0163-4810-8e38-580bb026afa4">
+        <db:generic-connection url="jdbc:derby://localhost:1527/training" driverClassName="org.apache.derby.jdbc.ClientDriver" useXaTransactions="true"/>
+    </db:config>
+    <db:config name="XA_MySQL_Database_Config" doc:name="Database Config" doc:id="0fb356e3-daf7-47ec-af7a-17115306c746">
+        <db:my-sql-connection host="localhost" port="3306" user="root" password="password" database="training?useUnicode=true&amp;useJDBCCompliantTimezoneShift=true&amp;useLegacyDatetimeCode=false&amp;serverTimezone=UTC" useXaTransactions="true"/>
+    </db:config>
+    <db:config name="Local_MySQL_Database_Config" doc:name="Database Config" doc:id="8b03d98d-c1bc-489f-81d8-43dbffa10cdf">
+        <db:my-sql-connection host="localhost" port="3306" user="root" password="password" database="training?useUnicode=true&amp;useJDBCCompliantTimezoneShift=true&amp;useLegacyDatetimeCode=false&amp;serverTimezone=UTC"/>
+    </db:config>
+    <!-- 
+	<db:config name="Derby_Database_Config" doc:name="Database Config" doc:id="96eaaa2d-d33b-474b-9a48-5155c5fdbb3a" >
+		<db:derby-connection database="jdbc:derby://localhost:1527/training"/>
+	</db:config>
+	-->
+    <vm:config name="Local_VM_Config" doc:name="VM Config" doc:id="c2737e79-4131-4f43-bbed-df9ad66450ae">
+        <vm:queues>
+            <vm:queue queueName="test"/>
+            <vm:queue queueName="testA"/>
+        </vm:queues>
+    </vm:config>
+    <vm:config name="XA_VM_Config" doc:name="VM Config" doc:id="552be0cc-338c-41c3-b76e-9d471b3acabe">
+        <vm:queues>
+            <vm:queue queueName="testX"/>
+            <vm:queue queueName="testXA"/>
+        </vm:queues>
+    </vm:config>
+</mule>
